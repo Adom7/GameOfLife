@@ -15,6 +15,8 @@ var grid = [width][height]uint8{}
 var buffer = [width][height]uint8{}
 var count int = 0
 var gameRunning = false
+var generation int = 0
+var livingCell int = 0
 
 func update() error {
 	for x := 1; x < width-1; x++ {
@@ -40,6 +42,7 @@ func update() error {
 
 func display(window *ebiten.Image) {
 	window.Fill(color.Black)
+	livingCell = 0
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
@@ -47,6 +50,7 @@ func display(window *ebiten.Image) {
 				for j := 0; j < scale; j++ {
 					if grid[x][y] == 1 {
 						window.Set(x*scale+i, y*scale+j, color.RGBA{R: 255})
+						livingCell++
 					}
 				}
 			}
@@ -66,6 +70,9 @@ func frame(window *ebiten.Image) error {
 	if count == 50 && gameRunning {
 		err = update()
 		count = 0
+		log.Printf("Generation: %v\n", generation)
+		log.Printf("Living cells: %v\n", livingCell/64)
+		generation++
 	}
 	if !ebiten.IsDrawingSkipped() {
 		display(window)
@@ -89,7 +96,6 @@ func toggleGameState() {
 	if gameRunning {
 		count = 49
 	}
-	log.Printf("Game Running: %v\n", gameRunning)
 }
 
 func main() {
