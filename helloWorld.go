@@ -5,6 +5,7 @@ import (
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"image/color"
 	"log"
+	"time"
 )
 
 var scale int = 8
@@ -14,10 +15,11 @@ const height = 400
 
 var grid = [width][height]uint8{}
 var buffer = [width][height]uint8{}
-var count int = 0
 var gameRunning = false
 var generation int = 0
 var livingCell int = 0
+var lastUpdateTime time.Time
+var timer time.Duration = 2000
 
 func update() error {
 	for x := 1; x < width-1; x++ {
@@ -60,6 +62,13 @@ func display(window *ebiten.Image) {
 }
 
 func frame(window *ebiten.Image) error {
+	if lastUpdateTime.IsZero() {
+		lastUpdateTime = time.Now()
+	}
+
+	timeElapsed := time.Since(lastUpdateTime)
+	desiredInterval := timer * time.Millisecond
+
 	handleMouseInput()
 	handleVerticalArrowsPress()
 	handleHorizontalArrowsPress()
@@ -68,15 +77,17 @@ func frame(window *ebiten.Image) error {
 		toggleGameState()
 	}
 
-	count++
 	var err error = nil
-	if count == 10 && gameRunning {
+
+	if timeElapsed >= desiredInterval && gameRunning {
 		err = update()
-		count = 0
 		log.Printf("Generation: %v\n", generation)
 		log.Printf("Living cells: %v\n", livingCell/64)
+		log.Printf("Interval: %v\n", desiredInterval)
 		generation++
+		lastUpdateTime = time.Now()
 	}
+
 	if !ebiten.IsDrawingSkipped() {
 		display(window)
 	}
@@ -94,11 +105,11 @@ func handleHorizontalArrowsPress() {
 }
 
 func handleVerticalArrowsPress() {
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		count++
+	if inpututil.IsKeyJustPressed(ebiten.KeyUp) && timer <= 4900 {
+		timer += 100
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		count--
+	if inpututil.IsKeyJustPressed(ebiten.KeyDown) && timer >= 200 {
+		timer -= 100
 	}
 }
 
@@ -114,9 +125,6 @@ func handleMouseInput() {
 
 func toggleGameState() {
 	gameRunning = !gameRunning
-	if gameRunning {
-		count = 9
-	}
 }
 
 func main() {
