@@ -7,7 +7,8 @@ import (
 	"log"
 )
 
-const scale int = 8
+var scale int = 8
+
 const width = 400
 const height = 400
 
@@ -60,6 +61,8 @@ func display(window *ebiten.Image) {
 
 func frame(window *ebiten.Image) error {
 	handleMouseInput()
+	handleVerticalArrowsPress()
+	handleHorizontalArrowsPress()
 
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		toggleGameState()
@@ -67,7 +70,7 @@ func frame(window *ebiten.Image) error {
 
 	count++
 	var err error = nil
-	if count == 50 && gameRunning {
+	if count == 10 && gameRunning {
 		err = update()
 		count = 0
 		log.Printf("Generation: %v\n", generation)
@@ -79,6 +82,24 @@ func frame(window *ebiten.Image) error {
 	}
 
 	return err
+}
+
+func handleHorizontalArrowsPress() {
+	if ebiten.IsKeyPressed(ebiten.KeyRight) {
+		scale++
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+		scale--
+	}
+}
+
+func handleVerticalArrowsPress() {
+	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+		count++
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyDown) {
+		count--
+	}
 }
 
 func handleMouseInput() {
@@ -94,7 +115,7 @@ func handleMouseInput() {
 func toggleGameState() {
 	gameRunning = !gameRunning
 	if gameRunning {
-		count = 49
+		count = 9
 	}
 }
 
