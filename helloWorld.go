@@ -1,22 +1,20 @@
 package main
 
 import (
+	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/inpututil"
 	"image/color"
 	"log"
-	"math/rand"
-
-	"github.com/hajimehoshi/ebiten"
 )
 
-const scale int = 2
-const width = 300
-const height = 300
+const scale int = 8
+const width = 400
+const height = 400
 
-var blue color.Color = color.RGBA{69, 145, 196, 255}
-var yellow color.Color = color.RGBA{255, 230, 120, 255}
-var grid [width][height]uint8 = [width][height]uint8{}
-var buffer [width][height]uint8 = [width][height]uint8{}
+var grid = [width][height]uint8{}
+var buffer = [width][height]uint8{}
 var count int = 0
+var gameRunning = false
 
 func update() error {
 	for x := 1; x < width-1; x++ {
@@ -41,14 +39,14 @@ func update() error {
 }
 
 func display(window *ebiten.Image) {
-	window.Fill(blue)
+	window.Fill(color.Black)
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
 			for i := 0; i < scale; i++ {
 				for j := 0; j < scale; j++ {
 					if grid[x][y] == 1 {
-						window.Set(x*scale+i, y*scale+j, yellow)
+						window.Set(x*scale+i, y*scale+j, color.RGBA{R: 255})
 					}
 				}
 			}
@@ -57,9 +55,15 @@ func display(window *ebiten.Image) {
 }
 
 func frame(window *ebiten.Image) error {
+	handleMouseInput()
+
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		toggleGameState()
+	}
+
 	count++
 	var err error = nil
-	if count == 20 {
+	if count == 50 && gameRunning {
 		err = update()
 		count = 0
 	}
@@ -70,15 +74,25 @@ func frame(window *ebiten.Image) error {
 	return err
 }
 
-func main() {
-	for x := 1; x < width-1; x++ {
-		for y := 1; y < height-1; y++ {
-			if rand.Float32() < 0.5 {
-				grid[x][y] = 1
-			}
+func handleMouseInput() {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		x, y := ebiten.CursorPosition()
+		gridX, gridY := x/scale, y/scale
+		if gridX >= 0 && gridX < width && gridY >= 0 && gridY < height {
+			grid[gridX][gridY] = 1
 		}
 	}
+}
 
+func toggleGameState() {
+	gameRunning = !gameRunning
+	if gameRunning {
+		count = 49
+	}
+	log.Printf("Game Running: %v\n", gameRunning)
+}
+
+func main() {
 	if err := ebiten.Run(frame, width, height, 2, "Game of Life"); err != nil {
 		log.Fatal(err)
 	}
